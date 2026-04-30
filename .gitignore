@@ -27,3 +27,6 @@ Thumbs.db
 
 # Docker
 *.pid
+# Local Codex metadata
+.codex/
+.codex

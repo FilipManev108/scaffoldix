@@ -17,4 +17,16 @@ class ApiResponse
             'data' => $data,
         ], $status);
     }
+
+     public static function error(
+        string $message = 'Request failed',
+        array $errors = [],
+        int $status = 400
+    ): JsonResponse {
+        return response()->json([
+            'success' => false,
+            'message' => $message,
+            'errors' => $errors,
+        ], $status);
+    }
 }

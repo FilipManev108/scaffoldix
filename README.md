@@ -24,7 +24,7 @@ The project is built as a full-stack portfolio application focused on:
 - Laravel
 - PHP
 - MySQL
-- Laravel Sanctum
+- Laravel Sanctum planned for authentication
 - Pest / PHPUnit
 
 ### Frontend
@@ -113,6 +113,53 @@ Run migrations:
 docker compose exec api php artisan migrate
 ```
 
+For the fuller local setup guide, see `docs/setup.md`.
+
+## Backend Commands
+
+Start the local Docker services:
+
+```bash
+docker compose up -d
+```
+
+Reset the backend database:
+
+```bash
+docker compose exec api php artisan migrate:fresh
+```
+
+Reset and seed demo data:
+
+```bash
+docker compose exec api php artisan migrate:fresh --seed
+```
+
+Run backend tests:
+
+```bash
+docker compose exec api ./vendor/bin/pest
+```
+
+Check the API health endpoint:
+
+```bash
+curl http://localhost:8000/api/health
+```
+
+## Demo Users
+
+Seeded demo users use the password `password`:
+
+```txt
+admin@demo.test
+teamlead@demo.test
+senior@demo.test
+mid@demo.test
+junior@demo.test
+viewer@demo.test
+```
+
 ## Docker Services
 
 The local Docker environment includes:
@@ -153,6 +200,9 @@ See:
 
 ```txt
 docs/architecture.md
+docs/database.md
+docs/testing.md
+docs/setup.md
 docs/permissions.md
 docs/git-flow.md
 docs/ai-rules.md
@@ -160,4 +210,20 @@ docs/ai-rules.md
 
 ## Current Status
 
-Phase 0: Planning and repository setup.
+Phase 1: Backend foundation completed.
+
+Implemented:
+
+- Laravel API route foundation with `GET /api/health`
+- Shared API response helper
+- Core Eloquent models and relationships
+- Database migrations for users, workspaces, teams, projects, tasks, comments, roles, permissions, statuses, and pivots
+- Factories and seeders for backend smoke data
+- Pest smoke tests for health, database factories, and seeders
+
+Planned later:
+
+- Authentication
+- Controllers and request validation
+- Policies and backend permission enforcement
+- Frontend application workflows

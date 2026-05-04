@@ -33,16 +33,26 @@ it('registers a valid user', function () {
     ]);
 });
 
-it('exposes the public login endpoint', function () {
+it('logs in a valid user', function () {
+    $user = User::factory()->create([
+        'email' => 'login@example.com',
+    ]);
+
     $this->postJson('/api/login', [
-        'email' => 'auth-route-login@example.com',
+        'email' => 'login@example.com',
         'password' => 'password',
     ])
         ->assertOk()
         ->assertJson([
             'success' => true,
-            'message' => 'Login endpoint is available',
-            'data' => null,
+            'message' => 'Logged in successfully',
+            'data' => [
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => 'login@example.com',
+                ],
+            ],
         ]);
 });
 
@@ -103,6 +113,22 @@ it('does not return sensitive user fields after registration', function () {
         ->not->toHaveKey('remember_token');
 });
 
+it('rejects invalid login credentials', function () {
+    User::factory()->create([
+        'email' => 'invalid-login@example.com',
+    ]);
+
+    $this->postJson('/api/login', [
+        'email' => 'invalid-login@example.com',
+        'password' => 'wrong-password',
+    ])
+        ->assertUnauthorized()
+        ->assertJson([
+            'success' => false,
+            'message' => 'Invalid credentials',
+        ]);
+});
+
 it('returns validation errors for invalid login payloads', function () {
     $this->postJson('/api/login', [])
         ->assertUnprocessable()
@@ -112,6 +138,33 @@ it('returns validation errors for invalid login payloads', function () {
         ]);
 });
 
+it('returns the authenticated user from me', function () {
+    $user = User::factory()->create([
+        'email' => 'me@example.com',
+    ]);
+
+    $this->postJson('/api/login', [
+        'email' => 'me@example.com',
+        'password' => 'password',
+    ])->assertOk();
+
+    $this->getJson('/api/me')
+        ->assertOk()
+        ->assertJson([
+            'success' => true,
+            'message' => 'Authenticated user retrieved successfully',
+            'data' => [
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => 'me@example.com',
+                ],
+            ],
+        ])
+        ->assertJsonMissingPath('data.user.password')
+        ->assertJsonMissingPath('data.user.remember_token');
+});
+
 it('protects authenticated auth endpoints with Sanctum', function (string $method, string $uri) {
     $this->json($method, $uri)
         ->assertUnauthorized();
@@ -119,3 +172,39 @@ it('protects authenticated auth endpoints with Sanctum', function (string $metho
     ['POST', '/api/logout'],
     ['GET', '/api/me'],
 ]);
+
+it('logs out an authenticated user', function () {
+    User::factory()->create([
+        'email' => 'logout@example.com',
+    ]);
+
+    $this->postJson('/api/login', [
+        'email' => 'logout@example.com',
+        'password' => 'password',
+    ])->assertOk();
+
+    $this->postJson('/api/logout')
+        ->assertOk()
+        ->assertJson([
+            'success' => true,
+            'message' => 'Logged out successfully',
+            'data' => null,
+        ]);
+});
+
+it('prevents a logged-out user from accessing me', function () {
+    User::factory()->create([
+        'email' => 'logged-out@example.com',
+    ]);
+
+    $this->postJson('/api/login', [
+        'email' => 'logged-out@example.com',
+        'password' => 'password',
+    ])->assertOk();
+
+    $this->getJson('/api/me')->assertOk();
+
+    $this->postJson('/api/logout')->assertOk();
+
+    $this->getJson('/api/me')->assertUnauthorized();
+});

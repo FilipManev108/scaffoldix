@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\EmailVerificationController;
 use App\Support\ApiResponse;
 use Illuminate\Support\Facades\Route;
 
@@ -13,8 +14,11 @@ Route::get('/health', function () {
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+    ->name('verification.verify');
 
 Route::middleware(['auth:sanctum', 'not.disabled'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend']);
 });

@@ -1,8 +1,11 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\URL;
 
 uses(RefreshDatabase::class);
 
@@ -31,6 +34,23 @@ it('registers a valid user', function () {
         'name' => 'Example User',
         'email' => 'register@example.com',
     ]);
+});
+
+it('sends a verification email to newly registered users', function () {
+    Notification::fake();
+
+    $this->postJson('/api/register', [
+        'name' => 'Verify User',
+        'email' => 'verify-register@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ])->assertCreated();
+
+    $user = User::where('email', 'verify-register@example.com')->firstOrFail();
+
+    expect($user->hasVerifiedEmail())->toBeFalse();
+
+    Notification::assertSentTo($user, VerifyEmail::class);
 });
 
 it('logs in a valid user', function () {
@@ -185,6 +205,73 @@ it('returns the authenticated user from me', function () {
         ->assertJsonMissingPath('data.user.remember_token');
 });
 
+it('allows an authenticated unverified user to request verification resend', function () {
+    Notification::fake();
+
+    User::factory()->unverified()->create([
+        'email' => 'resend@example.com',
+    ]);
+
+    $this->postJson('/api/login', [
+        'email' => 'resend@example.com',
+        'password' => 'password',
+    ])->assertOk();
+
+    $this->postJson('/api/email/verification-notification')
+        ->assertOk()
+        ->assertJson([
+            'success' => true,
+            'message' => 'Verification email sent',
+            'data' => null,
+        ]);
+
+    $user = User::where('email', 'resend@example.com')->firstOrFail();
+
+    Notification::assertSentTo($user, VerifyEmail::class);
+});
+
+it('marks a user email as verified from a valid verification link', function () {
+    $user = User::factory()->unverified()->create();
+
+    $this->getJson(signedVerificationUrlFor($user))
+        ->assertOk()
+        ->assertJson([
+            'success' => true,
+            'message' => 'Email verified successfully',
+            'data' => null,
+        ]);
+
+    expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
+});
+
+it('rejects invalid verification links', function () {
+    $user = User::factory()->unverified()->create();
+
+    $this->getJson(signedVerificationUrlFor($user, sha1('invalid-email')))
+        ->assertForbidden()
+        ->assertJson([
+            'success' => false,
+            'message' => 'Invalid verification link',
+            'errors' => [
+                'verification' => ['The email verification link is invalid or has expired.'],
+            ],
+        ]);
+
+    expect($user->fresh()->hasVerifiedEmail())->toBeFalse();
+});
+
+it('returns an appropriate response when email is already verified', function () {
+    $user = User::factory()->create();
+
+    $this->getJson(signedVerificationUrlFor($user))
+        ->assertOk()
+        ->assertJson([
+            'success' => true,
+            'message' => 'Email is already verified',
+            'data' => null,
+        ]);
+});
+
 it('blocks disabled authenticated users from me', function () {
     $user = User::factory()->create([
         'email' => 'disabled-me@example.com',
@@ -217,6 +304,11 @@ it('protects authenticated auth endpoints with Sanctum', function (string $metho
     ['POST', '/api/logout'],
     ['GET', '/api/me'],
 ]);
+
+it('prevents unauthenticated users from requesting verification resend', function () {
+    $this->postJson('/api/email/verification-notification')
+        ->assertUnauthorized();
+});
 
 it('logs out an authenticated user', function () {
     User::factory()->create([
@@ -278,3 +370,15 @@ it('blocks disabled authenticated users from logout', function () {
             ],
         ]);
 });
+
+function signedVerificationUrlFor(User $user, ?string $hash = null): string
+{
+    return URL::temporarySignedRoute(
+        'verification.verify',
+        now()->addMinutes(60),
+        [
+            'id' => $user->id,
+            'hash' => $hash ?? sha1($user->getEmailForVerification()),
+        ]
+    );
+}

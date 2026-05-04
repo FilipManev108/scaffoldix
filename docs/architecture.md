@@ -1,24 +1,10 @@
 # Architecture
 
-## Project Name
+## Project
 
-ScaffoldIX
+ScaffoldIX is a full-stack project management application for small software teams.
 
-## Project Type
-
-ScaffoldIX is a full-stack SaaS-style project management application for small software teams.
-
-It is inspired by tools like Jira, Linear, Notion, and GitHub Projects, but the goal is not to clone every feature.
-
-The goal is to demonstrate production-style full-stack development with a strong focus on:
-
-- Authorization
-- Team workflows
-- Clean architecture
-- Testing
-- Documentation
-- Docker
-- Deployment
+The repository is intentionally documentation-heavy because the project is being built in phases. This file separates the implemented Phase 1 backend foundation from planned later architecture.
 
 ## Monorepo Structure
 
@@ -39,23 +25,20 @@ scaffoldix/
 
 Laravel backend API.
 
-Responsibilities:
+Phase 1 responsibilities already present:
 
-- Authentication
-- Authorization
-- Database models
-- Business logic
-- API endpoints
-- Request validation
-- Backend permission enforcement
-- Email sending
-- Testing
+- API route bootstrap
+- `GET /api/health`
+- Shared API response helper
+- Eloquent models and relationships
+- Migrations, factories, and seeders
+- Pest smoke tests
 
 ### apps/web
 
 Next.js frontend application.
 
-Responsibilities:
+Planned responsibilities:
 
 - Public pages
 - Authentication UI
@@ -70,51 +53,98 @@ Important rule:
 
 Frontend permissions are for user experience only. Real permission enforcement must happen on the Laravel backend.
 
-## Backend Architecture
+## Implemented Phase 1 Backend
 
-Laravel should be structured around thin controllers and clear business logic separation.
+### API Route Foundation
 
-Preferred structure:
+The backend currently exposes a minimal API route in `apps/api/routes/api.php`:
 
 ```txt
-app/
-  Actions/
-  DTOs/
-  Enums/
-  Http/
-    Controllers/
-    Requests/
-    Resources/
-  Models/
-  Policies/
-  Services/
-database/
-  migrations/
-  seeders/
-  factories/
-routes/
-  api.php
+GET /api/health
 ```
 
-## Backend Rules
+The health route returns a standardized success response with the app name and current environment.
 
-Controllers should not contain heavy business logic.
+### API Responses
 
-A controller may:
+`App\Support\ApiResponse` provides shared JSON helpers:
 
-- Receive a request
-- Authorize the action
-- Call an action or service
-- Return an API resource
+- `success($data, $message, $status)`
+- `error($message, $errors, $status)`
 
-A controller should not:
+The current health endpoint uses `ApiResponse::success(...)`.
 
-- Contain complex permission logic
-- Contain long database workflows
-- Manually format large response structures
-- Duplicate business rules
+### Models And Relationships
+
+The backend includes Eloquent models for:
+
+- `User`
+- `Workspace`
+- `Team`
+- `Project`
+- `Task`
+- `Comment`
+- `Role`
+- `Permission`
+- `TaskStatus`
+
+The implemented model layer covers the main hierarchy:
+
+```txt
+Workspace -> Teams -> Projects -> Tasks -> Comments
+```
+
+It also includes role and permission relationships:
+
+```txt
+Workspace -> Roles -> Permissions
+Team + User + Role assignments through team_user_role
+```
+
+See `docs/database.md` for table-level details.
+
+### Factories
+
+Factories exist for the core backend models and support database smoke tests and future feature tests.
+
+### Seeders
+
+The backend includes seeders for:
+
+- Demo users
+- Permissions
+- Demo workspace/project/task data
+
+`DatabaseSeeder` runs the demo users, permissions, and workspace seeders in order.
+
+### Tests
+
+Pest is installed for backend testing. Phase 1 smoke tests cover:
+
+- Health endpoint response shape
+- `User` and `Workspace` factory persistence
+- Database seeder demo data
+
+See `docs/testing.md` for test commands and current coverage.
+
+## Not Implemented Yet
+
+The following backend pieces are planned but not implemented in Phase 1:
+
+- Authentication flows
+- Laravel Sanctum setup for login/logout workflows
+- Controllers for domain resources
+- Form request validation
+- API resources
+- Policies and gates
+- Permission service
+- Role hierarchy service
+- Business workflow endpoints
+- Frontend dashboard workflows
 
 ## Frontend Architecture
+
+The frontend architecture below is planned. It is not the active Phase 1 focus yet.
 
 Preferred structure:
 
@@ -169,7 +199,7 @@ The frontend should not:
 
 ## Database Direction
 
-Core planned entities:
+Phase 1 implemented entities:
 
 ```txt
 users
@@ -179,34 +209,29 @@ team_user
 projects
 tasks
 task_statuses
-task_priorities
 comments
 roles
 permissions
 role_permission
 team_user_role
-sprints
-activity_logs
-attachments
-invitations
 ```
 
-The initial MVP may implement fewer entities, but the structure should allow these concepts later.
+Planned later entities may include sprints, activity logs, attachments, invitations, and richer status/priority configuration.
 
 ## Authentication
 
-Authentication will use Laravel Sanctum.
+Authentication is planned and is not implemented yet.
 
-The frontend is a first-party SPA-style client.
+The intended approach is Laravel Sanctum with the frontend as a first-party SPA-style client.
 
-In local development:
+Current local development URLs:
 
 ```txt
 Frontend: http://localhost:3000
 Backend:  http://localhost:8000
 ```
 
-In production, the preferred setup is:
+Planned production direction:
 
 ```txt
 Frontend: https://app.example.com
@@ -215,7 +240,9 @@ Backend:  https://api.example.com
 
 ## Authorization
 
-Authorization must be enforced on the backend using:
+Authorization is planned and is not implemented yet.
+
+Planned backend enforcement:
 
 - Laravel policies
 - Laravel gates where appropriate
@@ -224,24 +251,26 @@ Authorization must be enforced on the backend using:
 
 Frontend permission checks are allowed only for UI/UX.
 
-Example:
-
-A Junior user should not see a "Delete Task" button.
-
-But if the Junior manually sends a DELETE request, the Laravel API must still reject it.
-
 ## Testing Direction
 
-Testing priority:
+Implemented now:
 
-1. Backend feature/API tests
-2. Auth tests
-3. Permission tests
-4. Task workflow tests
-5. Frontend smoke tests later
-6. Browser/E2E tests later
+1. Backend smoke tests
+2. Seeder smoke tests
+
+Planned testing priority:
+
+1. Auth tests
+2. Permission tests
+3. Policy tests
+4. Controller and API workflow tests
+5. Task workflow tests
+6. Frontend smoke tests
+7. Browser/E2E tests
 
 ## Deployment Direction
+
+Deployment is planned, not implemented.
 
 Preferred deployment:
 

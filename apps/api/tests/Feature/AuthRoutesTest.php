@@ -1,10 +1,12 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\URL;
 
 uses(RefreshDatabase::class);
@@ -173,6 +175,110 @@ it('returns validation errors for invalid login payloads', function () {
     $this->postJson('/api/login', [])
         ->assertUnprocessable()
         ->assertJsonValidationErrors([
+            'email',
+            'password',
+        ]);
+});
+
+it('sends a password reset email when requested', function () {
+    Notification::fake();
+
+    $user = User::factory()->create([
+        'email' => 'forgot-password@example.com',
+    ]);
+
+    $this->postJson('/api/forgot-password', [
+        'email' => 'forgot-password@example.com',
+    ])
+        ->assertOk()
+        ->assertJson([
+            'success' => true,
+            'message' => 'Password reset link sent',
+            'data' => null,
+        ]);
+
+    Notification::assertSentTo($user, ResetPassword::class);
+});
+
+it('resets a password with a valid token', function () {
+    $user = User::factory()->create([
+        'email' => 'reset-password@example.com',
+    ]);
+
+    $token = Password::broker()->createToken($user);
+
+    $this->postJson('/api/reset-password', [
+        'token' => $token,
+        'email' => 'reset-password@example.com',
+        'password' => 'new-password',
+        'password_confirmation' => 'new-password',
+    ])
+        ->assertOk()
+        ->assertJson([
+            'success' => true,
+            'message' => 'Password reset successfully',
+            'data' => null,
+        ]);
+
+    expect(Hash::check('new-password', $user->fresh()->password))->toBeTrue();
+});
+
+it('rejects invalid password reset tokens', function () {
+    User::factory()->create([
+        'email' => 'invalid-reset-token@example.com',
+    ]);
+
+    $this->postJson('/api/reset-password', [
+        'token' => 'invalid-token',
+        'email' => 'invalid-reset-token@example.com',
+        'password' => 'new-password',
+        'password_confirmation' => 'new-password',
+    ])
+        ->assertUnprocessable()
+        ->assertJson([
+            'success' => false,
+            'message' => 'Invalid password reset token',
+        ]);
+});
+
+it('logs in with the new password after reset', function () {
+    $user = User::factory()->create([
+        'email' => 'login-after-reset@example.com',
+    ]);
+
+    $token = Password::broker()->createToken($user);
+
+    $this->postJson('/api/reset-password', [
+        'token' => $token,
+        'email' => 'login-after-reset@example.com',
+        'password' => 'new-password',
+        'password_confirmation' => 'new-password',
+    ])->assertOk();
+
+    $this->postJson('/api/login', [
+        'email' => 'login-after-reset@example.com',
+        'password' => 'new-password',
+    ])
+        ->assertOk()
+        ->assertJson([
+            'success' => true,
+            'message' => 'Logged in successfully',
+        ]);
+});
+
+it('returns validation errors for invalid forgot password payloads', function () {
+    $this->postJson('/api/forgot-password', [])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors([
+            'email',
+        ]);
+});
+
+it('returns validation errors for invalid reset password payloads', function () {
+    $this->postJson('/api/reset-password', [])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors([
+            'token',
             'email',
             'password',
         ]);

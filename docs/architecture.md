@@ -4,7 +4,7 @@
 
 ScaffoldIX is a full-stack project management application for small software teams.
 
-The repository is intentionally documentation-heavy because the project is being built in phases. This file separates the implemented Phase 1 backend foundation from planned later architecture.
+The repository is intentionally documentation-heavy because the project is being built in phases. This file separates implemented backend foundation and auth work from planned later architecture.
 
 ## Monorepo Structure
 
@@ -25,14 +25,16 @@ scaffoldix/
 
 Laravel backend API.
 
-Phase 1 responsibilities already present:
+Implemented backend responsibilities:
 
 - API route bootstrap
 - `GET /api/health`
 - Shared API response helper
+- Sanctum-backed registration, login, logout, current-user, email verification, and password reset endpoints
+- Disabled-user auth blocking through `users.disabled_at`
 - Eloquent models and relationships
 - Migrations, factories, and seeders
-- Pest smoke tests
+- Pest smoke and auth feature tests
 
 ### apps/web
 
@@ -53,17 +55,27 @@ Important rule:
 
 Frontend permissions are for user experience only. Real permission enforcement must happen on the Laravel backend.
 
-## Implemented Phase 1 Backend
+## Implemented Backend
 
 ### API Route Foundation
 
-The backend currently exposes a minimal API route in `apps/api/routes/api.php`:
+The backend exposes API routes in `apps/api/routes/api.php`.
 
 ```txt
 GET /api/health
+POST /api/register
+POST /api/login
+POST /api/logout
+GET /api/me
+GET /api/verify-email/{id}/{hash}
+POST /api/email/verification-notification
+POST /api/forgot-password
+POST /api/reset-password
 ```
 
 The health route returns a standardized success response with the app name and current environment.
+
+Auth endpoint details are documented in `docs/auth.md`.
 
 ### API Responses
 
@@ -119,32 +131,33 @@ The backend includes seeders for:
 
 ### Tests
 
-Pest is installed for backend testing. Phase 1 smoke tests cover:
+Pest is installed for backend testing. Current backend tests cover:
 
 - Health endpoint response shape
 - `User` and `Workspace` factory persistence
 - Database seeder demo data
+- Auth feature behavior
 
 See `docs/testing.md` for test commands and current coverage.
 
 ## Not Implemented Yet
 
-The following backend pieces are planned but not implemented in Phase 1:
+The following pieces are planned but not implemented yet:
 
-- Authentication flows
-- Laravel Sanctum setup for login/logout workflows
 - Controllers for domain resources
-- Form request validation
 - API resources
 - Policies and gates
 - Permission service
 - Role hierarchy service
 - Business workflow endpoints
+- Frontend auth pages
+- Admin dashboard
+- Production deployment
 - Frontend dashboard workflows
 
 ## Frontend Architecture
 
-The frontend architecture below is planned. It is not the active Phase 1 focus yet.
+The frontend architecture below is planned. Backend auth is implemented, but frontend auth pages and dashboard workflows are not built yet.
 
 Preferred structure:
 
@@ -220,9 +233,11 @@ Planned later entities may include sprints, activity logs, attachments, invitati
 
 ## Authentication
 
-Authentication is planned and is not implemented yet.
+Backend authentication is implemented with Laravel Sanctum session auth.
 
-The intended approach is Laravel Sanctum with the frontend as a first-party SPA-style client.
+Implemented auth includes registration, login, logout, current user, disabled-user handling, email verification, password reset, and tests.
+
+See `docs/auth.md` for endpoint details, CSRF notes, Mailpit usage, and out-of-scope items.
 
 Current local development URLs:
 
@@ -257,16 +272,16 @@ Implemented now:
 
 1. Backend smoke tests
 2. Seeder smoke tests
+3. Auth feature tests
 
 Planned testing priority:
 
-1. Auth tests
-2. Permission tests
-3. Policy tests
-4. Controller and API workflow tests
-5. Task workflow tests
-6. Frontend smoke tests
-7. Browser/E2E tests
+1. Permission tests
+2. Policy tests
+3. Controller and API workflow tests
+4. Task workflow tests
+5. Frontend smoke tests
+6. Browser/E2E tests
 
 ## Deployment Direction
 

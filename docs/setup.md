@@ -78,3 +78,31 @@ After the API container is running:
 ```bash
 curl http://localhost:8000/api/health
 ```
+
+## Authentication Setup Notes
+
+Backend authentication uses Laravel Sanctum cookie/session auth.
+
+For SPA-style local requests, call the CSRF cookie endpoint before state-changing authenticated requests:
+
+```txt
+GET http://localhost:8000/sanctum/csrf-cookie
+```
+
+Auth endpoint details are documented in `docs/auth.md`.
+
+## Mailpit
+
+The Docker API service sends local auth emails through Mailpit:
+
+```txt
+MAIL_MAILER=smtp
+MAIL_HOST=mailpit
+MAIL_PORT=1025
+```
+
+Inspect verification and password reset emails in the browser:
+
+```txt
+http://localhost:8025
+```

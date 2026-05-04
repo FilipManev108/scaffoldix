@@ -42,6 +42,30 @@ Use Policies for authorization.
 
 Use Services or Actions for business logic.
 
+## Authentication Rules
+
+Backend auth is implemented with Laravel Sanctum cookie/session authentication.
+
+When changing auth behavior, update focused tests in:
+
+```txt
+apps/api/tests/Feature/AuthRoutesTest.php
+```
+
+Auth changes must preserve:
+
+- `App\Support\ApiResponse` JSON response shape
+- Form Request validation
+- Server-side protected route enforcement
+- Disabled-user blocking through `users.disabled_at`
+- Safe user responses without passwords or remember tokens
+
+Detailed auth behavior is documented in:
+
+```txt
+docs/auth.md
+```
+
 ## Permission Rules
 
 Never rely on frontend-only permissions.

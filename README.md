@@ -24,7 +24,7 @@ The project is built as a full-stack portfolio application focused on:
 - Laravel
 - PHP
 - MySQL
-- Laravel Sanctum planned for authentication
+- Laravel Sanctum for authentication
 - Pest / PHPUnit
 
 ### Frontend
@@ -160,6 +160,26 @@ junior@demo.test
 viewer@demo.test
 ```
 
+## Authentication
+
+Phase 2 backend authentication is implemented with Laravel Sanctum session authentication.
+
+Implemented API auth includes registration, login, logout, `GET /api/me`, disabled-user handling, email verification, password reset, and auth feature tests.
+
+SPA clients should call the Sanctum CSRF endpoint before state-changing authenticated requests:
+
+```txt
+GET /sanctum/csrf-cookie
+```
+
+Local auth emails can be inspected in Mailpit:
+
+```txt
+http://localhost:8025
+```
+
+For endpoint details and behavior notes, see `docs/auth.md`.
+
 ## Docker Services
 
 The local Docker environment includes:
@@ -200,6 +220,7 @@ See:
 
 ```txt
 docs/architecture.md
+docs/auth.md
 docs/database.md
 docs/testing.md
 docs/setup.md
@@ -210,20 +231,22 @@ docs/ai-rules.md
 
 ## Current Status
 
-Phase 1: Backend foundation completed.
+Phase 1 backend foundation and Phase 2 backend authentication are complete.
 
 Implemented:
 
 - Laravel API route foundation with `GET /api/health`
 - Shared API response helper
+- Laravel Sanctum session authentication
+- Registration, login, logout, current user, email verification, password reset, and disabled-user auth handling
 - Core Eloquent models and relationships
 - Database migrations for users, workspaces, teams, projects, tasks, comments, roles, permissions, statuses, and pivots
 - Factories and seeders for backend smoke data
-- Pest smoke tests for health, database factories, and seeders
+- Pest tests for health, database factories, seeders, and auth behavior
 
 Planned later:
 
-- Authentication
-- Controllers and request validation
+- Frontend auth pages
+- Team/project/task CRUD
 - Policies and backend permission enforcement
 - Frontend application workflows

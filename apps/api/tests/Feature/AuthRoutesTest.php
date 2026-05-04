@@ -129,6 +129,26 @@ it('rejects invalid login credentials', function () {
         ]);
 });
 
+it('rejects disabled user login attempts', function () {
+    User::factory()->create([
+        'email' => 'disabled-login@example.com',
+        'disabled_at' => now(),
+    ]);
+
+    $this->postJson('/api/login', [
+        'email' => 'disabled-login@example.com',
+        'password' => 'password',
+    ])
+        ->assertForbidden()
+        ->assertJson([
+            'success' => false,
+            'message' => 'Account is disabled',
+            'errors' => [
+                'account' => ['This account has been disabled.'],
+            ],
+        ]);
+});
+
 it('returns validation errors for invalid login payloads', function () {
     $this->postJson('/api/login', [])
         ->assertUnprocessable()
@@ -163,6 +183,31 @@ it('returns the authenticated user from me', function () {
         ])
         ->assertJsonMissingPath('data.user.password')
         ->assertJsonMissingPath('data.user.remember_token');
+});
+
+it('blocks disabled authenticated users from me', function () {
+    $user = User::factory()->create([
+        'email' => 'disabled-me@example.com',
+    ]);
+
+    $this->postJson('/api/login', [
+        'email' => 'disabled-me@example.com',
+        'password' => 'password',
+    ])->assertOk();
+
+    $user->forceFill([
+        'disabled_at' => now(),
+    ])->save();
+
+    $this->getJson('/api/me')
+        ->assertForbidden()
+        ->assertJson([
+            'success' => false,
+            'message' => 'Account is disabled',
+            'errors' => [
+                'account' => ['This account has been disabled.'],
+            ],
+        ]);
 });
 
 it('protects authenticated auth endpoints with Sanctum', function (string $method, string $uri) {
@@ -207,4 +252,29 @@ it('prevents a logged-out user from accessing me', function () {
     $this->postJson('/api/logout')->assertOk();
 
     $this->getJson('/api/me')->assertUnauthorized();
+});
+
+it('blocks disabled authenticated users from logout', function () {
+    $user = User::factory()->create([
+        'email' => 'disabled-logout@example.com',
+    ]);
+
+    $this->postJson('/api/login', [
+        'email' => 'disabled-logout@example.com',
+        'password' => 'password',
+    ])->assertOk();
+
+    $user->forceFill([
+        'disabled_at' => now(),
+    ])->save();
+
+    $this->postJson('/api/logout')
+        ->assertForbidden()
+        ->assertJson([
+            'success' => false,
+            'message' => 'Account is disabled',
+            'errors' => [
+                'account' => ['This account has been disabled.'],
+            ],
+        ]);
 });

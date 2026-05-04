@@ -36,8 +36,9 @@ class AuthController extends Controller
     public function login(LoginRequest $request): JsonResponse
     {
         $credentials = $request->validated();
+        $user = User::where('email', $credentials['email'])->first();
 
-        if (! Auth::attempt($credentials)) {
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             return ApiResponse::error(
                 'Invalid credentials',
                 [
@@ -46,6 +47,18 @@ class AuthController extends Controller
                 401
             );
         }
+
+        if ($user->disabled_at !== null) {
+            return ApiResponse::error(
+                'Account is disabled',
+                [
+                    'account' => ['This account has been disabled.'],
+                ],
+                403
+            );
+        }
+
+        Auth::login($user);
 
         if ($request->hasSession()) {
             $request->session()->regenerate();

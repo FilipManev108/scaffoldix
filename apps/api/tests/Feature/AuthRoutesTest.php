@@ -88,6 +88,23 @@ it('returns validation errors for invalid registration payloads', function () {
         ]);
 });
 
+it('requires password confirmation for registration', function () {
+    $this->postJson('/api/register', [
+        'name' => 'Mismatch User',
+        'email' => 'registration-mismatch@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'different-password',
+    ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors([
+            'password',
+        ]);
+
+    $this->assertDatabaseMissing('users', [
+        'email' => 'registration-mismatch@example.com',
+    ]);
+});
+
 it('rejects duplicate email registration', function () {
     User::factory()->create([
         'email' => 'taken@example.com',
@@ -133,6 +150,20 @@ it('does not return sensitive user fields after registration', function () {
     expect($response->json('data.user'))
         ->not->toHaveKey('password')
         ->not->toHaveKey('remember_token');
+});
+
+it('does not return sensitive user fields after login', function () {
+    User::factory()->create([
+        'email' => 'safe-login@example.com',
+    ]);
+
+    $this->postJson('/api/login', [
+        'email' => 'safe-login@example.com',
+        'password' => 'password',
+    ])
+        ->assertOk()
+        ->assertJsonMissingPath('data.user.password')
+        ->assertJsonMissingPath('data.user.remember_token');
 });
 
 it('rejects invalid login credentials', function () {
@@ -200,6 +231,21 @@ it('sends a password reset email when requested', function () {
     Notification::assertSentTo($user, ResetPassword::class);
 });
 
+it('does not send password reset emails for unknown emails', function () {
+    Notification::fake();
+
+    $this->postJson('/api/forgot-password', [
+        'email' => 'missing-reset@example.com',
+    ])
+        ->assertUnprocessable()
+        ->assertJson([
+            'success' => false,
+            'message' => 'Unable to send password reset link',
+        ]);
+
+    Notification::assertNothingSent();
+});
+
 it('resets a password with a valid token', function () {
     $user = User::factory()->create([
         'email' => 'reset-password@example.com',
@@ -238,6 +284,19 @@ it('rejects invalid password reset tokens', function () {
         ->assertJson([
             'success' => false,
             'message' => 'Invalid password reset token',
+        ]);
+});
+
+it('rejects mismatched password confirmation during password reset', function () {
+    $this->postJson('/api/reset-password', [
+        'token' => 'token',
+        'email' => 'reset-confirmation@example.com',
+        'password' => 'new-password',
+        'password_confirmation' => 'different-password',
+    ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors([
+            'password',
         ]);
 });
 
@@ -414,6 +473,35 @@ it('protects authenticated auth endpoints with Sanctum', function (string $metho
 it('prevents unauthenticated users from requesting verification resend', function () {
     $this->postJson('/api/email/verification-notification')
         ->assertUnauthorized();
+});
+
+it('blocks disabled authenticated users from requesting verification resend', function () {
+    Notification::fake();
+
+    $user = User::factory()->unverified()->create([
+        'email' => 'disabled-resend@example.com',
+    ]);
+
+    $this->postJson('/api/login', [
+        'email' => 'disabled-resend@example.com',
+        'password' => 'password',
+    ])->assertOk();
+
+    $user->forceFill([
+        'disabled_at' => now(),
+    ])->save();
+
+    $this->postJson('/api/email/verification-notification')
+        ->assertForbidden()
+        ->assertJson([
+            'success' => false,
+            'message' => 'Account is disabled',
+            'errors' => [
+                'account' => ['This account has been disabled.'],
+            ],
+        ]);
+
+    Notification::assertNothingSent();
 });
 
 it('logs out an authenticated user', function () {

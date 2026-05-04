@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -25,13 +26,7 @@ class AuthController extends Controller
 
         return ApiResponse::success(
             [
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'created_at' => $user->created_at,
-                    'updated_at' => $user->updated_at,
-                ],
+                'user' => $this->safeUserData($user),
             ],
             'User registered successfully',
             201
@@ -40,17 +35,44 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request): JsonResponse
     {
+        $credentials = $request->validated();
+
+        if (! Auth::attempt($credentials)) {
+            return ApiResponse::error(
+                'Invalid credentials',
+                [
+                    'email' => ['The provided credentials are incorrect.'],
+                ],
+                401
+            );
+        }
+
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
         return ApiResponse::success(
-            null,
-            'Login endpoint is available'
+            [
+                'user' => $this->safeUserData($request->user()),
+            ],
+            'Logged in successfully'
         );
     }
 
-    public function logout(): JsonResponse
+    public function logout(Request $request): JsonResponse
     {
+        Auth::guard('web')->logout();
+
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        Auth::forgetGuards();
+
         return ApiResponse::success(
             null,
-            'Logout endpoint is available'
+            'Logged out successfully'
         );
     }
 
@@ -58,9 +80,23 @@ class AuthController extends Controller
     {
         return ApiResponse::success(
             [
-                'user' => $request->user(),
+                'user' => $this->safeUserData($request->user()),
             ],
-            'Authenticated user endpoint is available'
+            'Authenticated user retrieved successfully'
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function safeUserData(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'created_at' => $user->created_at,
+            'updated_at' => $user->updated_at,
+        ];
     }
 }

@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\ProjectMemberController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TaskStatusController;
 use App\Http\Controllers\Api\TeamController;
@@ -37,6 +38,9 @@ Route::middleware(['auth:sanctum', 'not.disabled'])->group(function () {
     Route::post('/workspaces/{workspace}/teams/{team}/members', [TeamMemberController::class, 'store']);
     Route::delete('/workspaces/{workspace}/teams/{team}/members/{user}', [TeamMemberController::class, 'destroy']);
     Route::apiResource('workspaces.teams', TeamController::class);
+    Route::get('/workspaces/{workspace}/projects/{project}/members', [ProjectMemberController::class, 'index']);
+    Route::post('/workspaces/{workspace}/projects/{project}/members', [ProjectMemberController::class, 'store']);
+    Route::delete('/workspaces/{workspace}/projects/{project}/members/{user}', [ProjectMemberController::class, 'destroy']);
     Route::apiResource('workspaces.projects', ProjectController::class);
     Route::apiResource('projects.task-statuses', TaskStatusController::class)
         ->parameters(['task-statuses' => 'taskStatus']);

@@ -19,7 +19,6 @@ class ProjectResource extends JsonResource
             'created_by' => $this->created_by,
             'name' => $this->name,
             'slug' => $this->slug,
-            'description' => $this->description,
             'starts_at' => $this->starts_at,
             'ends_at' => $this->ends_at,
             'created_at' => $this->created_at,

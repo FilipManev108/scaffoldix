@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Domain;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreWorkspaceRequest extends FormRequest
 {
@@ -16,6 +17,10 @@ class StoreWorkspaceRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [];
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'slug' => ['required', 'string', 'max:255', 'alpha_dash:ascii', Rule::unique('workspaces', 'slug')],
+            'description' => ['nullable', 'string'],
+        ];
     }
 }

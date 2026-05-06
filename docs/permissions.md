@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The permission system is the central technical feature of ScaffoldIX.
+The permission system is a planned central technical feature of ScaffoldIX.
 
 The goal is to support:
 
@@ -22,7 +22,18 @@ Frontend checks only control what the user sees.
 
 They do not provide security.
 
-## Default Roles
+## Current Status
+
+The current backend domain API uses explicit membership-based access checks:
+
+- Workspace access comes from membership in at least one team in the workspace.
+- Team membership is stored in `team_user`.
+- Project membership is stored in `project_user`.
+- Comment update and delete are author-only.
+
+The role and permission matrix described below is planned and is not enforced yet.
+
+## Planned Default Roles
 
 ```txt
 Admin
@@ -33,7 +44,7 @@ Junior
 Viewer
 ```
 
-## Role Levels
+## Planned Role Levels
 
 Each role has an authority level.
 
@@ -56,7 +67,7 @@ A Mid can assign unassigned tasks to himself or to Junior users.
 A Junior cannot assign tasks.
 ```
 
-## Permission Naming
+## Planned Permission Naming
 
 Permissions should use dot notation.
 
@@ -98,7 +109,7 @@ admin.access
 user.disable
 ```
 
-## Backend Enforcement
+## Planned Backend Enforcement
 
 Backend enforcement should use:
 
@@ -119,7 +130,7 @@ TeamPolicy
 RolePolicy
 ```
 
-## Frontend Permission Usage
+## Planned Frontend Permission Usage
 
 Frontend permissions may be used to:
 

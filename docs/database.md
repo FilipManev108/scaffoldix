@@ -2,12 +2,14 @@
 
 ## Overview
 
-Phase 1 implements the backend database foundation for workspaces, teams, projects, tasks, comments, roles, permissions, task statuses, and membership pivots.
+The backend database foundation supports workspaces, teams, projects, task statuses, tasks, comments, roles, permissions, and membership pivots.
 
 Main hierarchy:
 
 ```txt
-Workspace -> Teams -> Projects -> Tasks -> Comments
+Workspace -> Teams
+Workspace -> Projects -> Task statuses
+Workspace -> Projects -> Tasks -> Comments
 ```
 
 Role and permission structure:
@@ -45,6 +47,8 @@ Laravel default support tables also exist, including cache, jobs, sessions, and 
 
 `Project` belongs to a workspace, team, and creator. Projects have many tasks and many users through `project_user`.
 
+`TaskStatus` belongs to a workspace and project. Current task status endpoints are project-scoped.
+
 `Task` belongs to a project, status, creator, and optional assignee. Tasks have many comments.
 
 `Comment` belongs to a task and user.
@@ -55,13 +59,13 @@ Laravel default support tables also exist, including cache, jobs, sessions, and 
 
 ## Pivot Tables
 
-`team_user` stores basic team membership with a unique `team_id` and `user_id` pair.
+`team_user` stores basic team membership with a unique `team_id` and `user_id` pair. Current workspace and domain access checks use team membership as the source of workspace access.
 
-`project_user` stores project membership with a unique `project_id` and `user_id` pair.
+`project_user` stores project membership with a unique `project_id` and `user_id` pair. Current project member endpoints add, list, and remove records from this pivot.
 
 `role_permission` connects roles to permission records with a unique `role_id` and `permission_id` pair.
 
-`team_user_role` assigns one or more roles to a user within a team. It stores `team_id`, `user_id`, and `role_id` and enforces that combination as unique.
+`team_user_role` is reserved for planned team-scoped role assignment. It stores `team_id`, `user_id`, and `role_id` and enforces that combination as unique, but current basic team membership endpoints use `team_user`.
 
 ## Soft Deletes
 

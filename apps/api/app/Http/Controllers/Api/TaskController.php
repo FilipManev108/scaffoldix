@@ -5,38 +5,128 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Domain\StoreTaskRequest;
 use App\Http\Requests\Domain\UpdateTaskRequest;
+use App\Http\Resources\TaskResource;
+use App\Models\Project;
+use App\Models\Task;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    public function index(string $project): JsonResponse
+    public function index(Request $request, string $project): JsonResponse
     {
-        return $this->placeholder('Task index endpoint is not implemented yet');
+        $project = $this->accessibleProject($request, $project);
+
+        if (! $project) {
+            return $this->forbidden();
+        }
+
+        $tasks = $project->tasks()
+            ->orderByDesc('created_at')
+            ->get();
+
+        return ApiResponse::success(
+            TaskResource::collection($tasks),
+            'Tasks retrieved successfully'
+        );
     }
 
     public function store(StoreTaskRequest $request, string $project): JsonResponse
     {
-        return $this->placeholder('Task store endpoint is not implemented yet');
+        $project = $this->accessibleProject($request, $project);
+
+        if (! $project) {
+            return $this->forbidden();
+        }
+
+        $task = $project->tasks()->create([
+            ...$request->validated(),
+            'created_by' => $request->user()->id,
+        ]);
+
+        return ApiResponse::success(
+            new TaskResource($task),
+            'Task created successfully',
+            201
+        );
     }
 
-    public function show(string $project, string $task): JsonResponse
+    public function show(Request $request, string $project, string $task): JsonResponse
     {
-        return $this->placeholder('Task show endpoint is not implemented yet');
+        $task = $this->accessibleTask($request, $project, $task);
+
+        if (! $task) {
+            return $this->forbidden();
+        }
+
+        return ApiResponse::success(
+            new TaskResource($task),
+            'Task retrieved successfully'
+        );
     }
 
     public function update(UpdateTaskRequest $request, string $project, string $task): JsonResponse
     {
-        return $this->placeholder('Task update endpoint is not implemented yet');
+        $task = $this->accessibleTask($request, $project, $task);
+
+        if (! $task) {
+            return $this->forbidden();
+        }
+
+        $task->update($request->validated());
+
+        return ApiResponse::success(
+            new TaskResource($task),
+            'Task updated successfully'
+        );
     }
 
-    public function destroy(string $project, string $task): JsonResponse
+    public function destroy(Request $request, string $project, string $task): JsonResponse
     {
-        return $this->placeholder('Task destroy endpoint is not implemented yet');
+        $task = $this->accessibleTask($request, $project, $task);
+
+        if (! $task) {
+            return $this->forbidden();
+        }
+
+        $task->delete();
+
+        return ApiResponse::success(
+            null,
+            'Task deleted successfully'
+        );
     }
 
-    private function placeholder(string $message): JsonResponse
+    private function accessibleProject(Request $request, string $project): ?Project
     {
-        return ApiResponse::error($message, [], 501);
+        return Project::query()
+            ->whereKey($project)
+            ->whereHas('workspace.teams.users', function ($query) use ($request): void {
+                $query->whereKey($request->user()->id);
+            })
+            ->first();
+    }
+
+    private function accessibleTask(Request $request, string $project, string $task): ?Task
+    {
+        return Task::query()
+            ->whereKey($task)
+            ->where('project_id', $project)
+            ->whereHas('project.workspace.teams.users', function ($query) use ($request): void {
+                $query->whereKey($request->user()->id);
+            })
+            ->first();
+    }
+
+    private function forbidden(): JsonResponse
+    {
+        return ApiResponse::error(
+            'Task access denied',
+            [
+                'task' => ['You do not have access to this task.'],
+            ],
+            403
+        );
     }
 }

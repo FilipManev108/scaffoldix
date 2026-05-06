@@ -10,9 +10,9 @@ The project is built as a portfolio application focused on:
 - Next.js frontend architecture
 - MySQL database design
 - role-based and permission-based authorization
-- team/project/task workflows
+- team, project, task, and comment workflows
 - Dockerized local development
-- testing
+- backend testing
 - technical documentation
 - AI-assisted development workflow
 
@@ -25,81 +25,70 @@ The project is built as a portfolio application focused on:
 - `docker-compose.yml` — local development services
 - `README.md` — main project overview and setup entry point
 
-## Current Phase Status
+## Current Project Status
 
-Phase 1 backend foundation is complete.
+The Laravel API has implemented authentication and core domain APIs.
 
-Implemented backend foundation includes:
+Current backend behavior should be verified from the code and documentation, especially:
 
-- Laravel API route foundation
-- `GET /api/health`
-- `App\Support\ApiResponse`
-- core database migrations
-- Eloquent models and relationships
-- factories
-- seeders
-- Pest setup
-- backend smoke tests
-- Phase 1 documentation
+- `apps/api/AGENTS.md`
+- `apps/api/routes/api.php`
+- `docs/architecture.md`
+- `docs/auth.md`
+- `docs/database.md`
+- `docs/testing.md`
 
-Not implemented yet:
-
-- authentication
-- Laravel Sanctum login/logout flow
-- controllers for domain resources
-- form requests
-- API resources
-- policies
-- permission enforcement
-- frontend dashboard workflows
-
-Do not assume these planned pieces already exist.
+Do not assume planned features exist unless the code or documentation confirms them.
 
 ## General Rules
 
 - Inspect existing files before editing.
 - Only edit files relevant to the requested task.
-- Do not make broad architectural changes unless explicitly requested.
-- Do not add new packages unless explicitly requested.
-- Do not rename existing files, classes, branches, tables, or routes unless explicitly requested.
+- Keep changes small and focused.
 - Prefer simple, readable code over clever abstractions.
 - Preserve existing project conventions.
-- Keep changes small and focused.
+- Do not add packages unless explicitly requested.
+- Do not rename files, classes, routes, route parameters, tables, columns, or branches unless explicitly requested.
+- Do not make broad architectural changes unless explicitly requested.
+- Do not use planning labels in production filenames, test filenames, class names, helper names, or route names.
 - Do not commit changes unless explicitly asked.
-- Ask for clarification when a task is ambiguous instead of guessing.
 
 ## Documentation Rules
 
-When changing architecture, update:
+Update documentation when changing:
 
-- `docs/architecture.md`
+- architecture
+- setup or Docker workflow
+- database structure
+- authentication behavior
+- authorization behavior
+- testing setup or testing strategy
+- public API behavior
 
-When changing database structure, update:
-
-- `docs/database.md`
-
-When changing setup or Docker workflow, update:
+Relevant documentation locations include:
 
 - `README.md`
-- `docs/setup.md`
-
-When changing testing setup or test strategy, update:
-
+- `docs/architecture.md`
+- `docs/auth.md`
+- `docs/database.md`
 - `docs/testing.md`
-
-When changing permissions or authorization rules, update:
-
 - `docs/permissions.md`
 
-Do not invent implemented features in documentation. If something is planned but not built, label it as planned.
+Do not invent implemented features in documentation.
+
+If something is planned but not built, label it as planned.
 
 ## Backend Rules
 
-Laravel backend lives in:
+Laravel backend code lives in:
 
 - `apps/api`
 
-Run Laravel, Composer, and Pest commands inside the API container.
+Backend-specific instructions live in:
+
+- `apps/api/AGENTS.md`
+
+Run Laravel, Composer, Artisan, and Pest commands inside the API container.
 
 Use:
 
@@ -111,50 +100,13 @@ docker compose exec api ./vendor/bin/pest
 
 Do not assume host PHP or host Composer is the runtime source of truth.
 
-## Laravel Code Rules
-
-- Keep controllers thin.
-- Use Form Request classes for validation when request validation is introduced.
-- Use API Resources for structured resource responses when domain endpoints are introduced.
-- Use Policies/Gates for authorization when permissions are introduced.
-- Do not put complex business logic in controllers.
-- Do not duplicate response formatting manually when `App\Support\ApiResponse` fits the task.
-- Do not implement frontend-only security.
-- Backend authorization must be enforced server-side.
-
-## Database Rules
-
-- Do not edit already-merged migrations unless explicitly requested.
-- For schema changes after merge, create a new migration.
-- Keep workspace scoping in mind.
-- Roles are workspace-scoped.
-- Permissions are global permission definitions.
-- Team/user/role assignment is represented through `team_user_role`.
-- Do not add soft deletes to pivot tables unless explicitly requested.
-
-## Testing Rules
-
-Before finishing backend work, run:
-
-```bash
-docker compose exec api ./vendor/bin/pest
-```
-
-Current smoke tests cover:
-
-- API health endpoint
-- basic factory/database persistence
-- demo seeders
-
-Do not claim auth, permission, policy, controller, or business workflow coverage until those tests exist.
-
 ## Frontend Rules
 
-Frontend lives in:
+Frontend code lives in:
 
 - `apps/web`
 
-Planned frontend stack:
+Expected frontend stack:
 
 - Next.js
 - TypeScript
@@ -163,9 +115,39 @@ Planned frontend stack:
 - React Hook Form
 - Zod
 
-Use Next.js App Router. Do not add React Router.
+Use Next.js App Router.
 
-Frontend permission checks are only for user experience. They are not security.
+Do not add React Router.
+
+Frontend permission checks are only user experience helpers. They are not security.
+
+## Authorization Rules
+
+Backend authorization must be enforced server-side.
+
+Frontend-only permission checks are not sufficient.
+
+Do not add broad role or permission architecture unless explicitly requested.
+
+Do not claim authorization, permission, or policy coverage unless matching tests exist.
+
+## Testing Rules
+
+Backend tests use Pest.
+
+Before finishing backend work, run:
+
+```bash
+docker compose exec api ./vendor/bin/pest
+```
+
+When route behavior changes, also run:
+
+```bash
+docker compose exec api php artisan route:list
+```
+
+Do not claim test coverage unless matching tests exist.
 
 ## Docker Rules
 
@@ -183,26 +165,17 @@ docker compose exec api php artisan migrate:fresh --seed
 docker compose exec api ./vendor/bin/pest
 ```
 
-The API service uses:
+The API service uses bind-mounted source code and a Docker volume for Composer dependencies.
 
-```yaml
-./apps/api:/var/www/html
-api_vendor:/var/www/html/vendor
-```
-
-Meaning:
-
-- Laravel source code is bind-mounted from the host.
-- Composer dependencies live in a Docker named volume.
-- Run Composer inside the container, not on the host.
+Run Composer inside the container, not on the host.
 
 ## Git Rules
 
 Use small, focused branches.
 
-Branch examples:
+Example branch names:
 
-```
+```txt
 feature/auth-login
 feature/team-management
 feature/task-comments
@@ -213,7 +186,7 @@ test/auth-feature-tests
 
 Use conventional commits:
 
-```
+```txt
 feat: add login endpoint
 fix: correct role permission pivot
 docs: update setup guide
@@ -229,4 +202,3 @@ After editing, summarize:
 - files changed
 - what changed
 - commands run
-- remaining risks or follow-up work

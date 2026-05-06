@@ -2,7 +2,7 @@
 
 ## Overview
 
-Phase 2 backend authentication is implemented in the Laravel API using Laravel Sanctum session authentication.
+Backend authentication is implemented in the Laravel API using Laravel Sanctum session authentication.
 
 Implemented auth features:
 
@@ -119,10 +119,10 @@ Covered areas include registration, login, logout, `/api/me`, protected-route re
 
 ## Out Of Scope
 
-Phase 2 auth does not include:
+Current auth does not include:
 
 - Frontend auth pages
-- Team/project/task CRUD
+- Role and permission matrix enforcement
 - Permission policies
 - Admin dashboard
 - Production deployment

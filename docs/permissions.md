@@ -1,52 +1,80 @@
-# Permissions System
-
-## Purpose
-
-The permission system is a planned central technical feature of ScaffoldIX.
-
-The goal is to support:
-
-- Default roles
-- Custom roles
-- Role hierarchy
-- Scoped permissions
-- Team/project-based authorization
-- Backend-enforced security
-- Frontend permission-aware UI
-
-## Core Rule
-
-Every important permission must be enforced on the backend.
-
-Frontend checks only control what the user sees.
-
-They do not provide security.
+# Permissions
 
 ## Current Status
 
-The current backend domain API uses explicit membership-based access checks:
+ScaffoldIX seeds a permission catalog and demo role-permission assignments for the implemented backend API areas.
+
+Permissions are not enforced yet. Current protected domain routes still use membership-based access checks:
 
 - Workspace access comes from membership in at least one team in the workspace.
 - Team membership is stored in `team_user`.
 - Project membership is stored in `project_user`.
-- Comment update and delete are author-only.
+- Comment update and delete are limited to the comment author.
 
-The role and permission matrix described below is planned and is not enforced yet.
+## Naming Convention
 
-## Planned Default Roles
+Permissions use predictable dot notation:
 
 ```txt
-Admin
-Team Lead
-Senior
-Mid
-Junior
-Viewer
+resource.action
 ```
 
-## Planned Role Levels
+Resource names are singular. Multi-word resources use snake case, such as `team_member.view` and `task_status.update`.
 
-Each role has an authority level.
+Actions currently use:
+
+```txt
+view
+create
+update
+delete
+```
+
+The permissions catalog is global. Roles are scoped to a workspace and receive permissions through `role_permission`.
+
+## Seeded Permission Catalog
+
+```txt
+workspace.view
+workspace.create
+workspace.update
+workspace.delete
+team.view
+team.create
+team.update
+team.delete
+team_member.view
+team_member.create
+team_member.delete
+project.view
+project.create
+project.update
+project.delete
+project_member.view
+project_member.create
+project_member.delete
+task_status.view
+task_status.create
+task_status.update
+task_status.delete
+task.view
+task.create
+task.update
+task.delete
+comment.view
+comment.create
+comment.update
+comment.delete
+role.view
+role.create
+role.update
+role.delete
+permission.view
+```
+
+## Seeded Demo Roles
+
+Seeded role levels:
 
 ```txt
 Admin:     100
@@ -57,242 +85,19 @@ Junior:    20
 Viewer:    10
 ```
 
-Role levels help with hierarchy-based rules.
+Role-permission expectations:
 
-Example:
+| Role | Seeded permissions |
+| --- | --- |
+| Admin | All seeded permissions. |
+| Team Lead | Broad workspace, team, team member, project, project member, task status, task, and comment permissions, plus `role.view` and `permission.view`. Team Lead does not receive `workspace.delete` or role create/update/delete permissions. |
+| Senior | Project view plus task status, task, and comment create/update/delete workflow permissions. |
+| Mid | Project and task status view, normal task create/update work, and comment create/update/delete work. |
+| Junior | Project and task status view, limited task update work, and comment create/update work. |
+| Viewer | Read-only domain permissions only. Viewer does not receive role or permission viewing. |
 
-```txt
-A Senior can assign tasks to Mid or Junior users.
-A Mid can assign unassigned tasks to himself or to Junior users.
-A Junior cannot assign tasks.
-```
+## Planned Enforcement
 
-## Planned Permission Naming
+Next work should add permission resolution and backend enforcement through policies, gates, endpoint checks, or equivalent Laravel authorization boundaries.
 
-Permissions should use dot notation.
-
-Examples:
-
-```txt
-team.create
-team.update
-team.delete
-team.view
-
-project.create
-project.update
-project.delete
-project.view
-
-task.create
-task.update
-task.delete
-task.assign
-task.change_status
-task.view
-
-comment.create
-comment.update_own
-comment.delete_own
-comment.delete_any
-
-status.create
-status.update
-status.delete
-
-role.create
-role.update
-role.delete
-role.assign
-
-admin.access
-user.disable
-```
-
-## Planned Backend Enforcement
-
-Backend enforcement should use:
-
-```txt
-Policies
-Gates
-PermissionService
-RoleHierarchyService
-```
-
-Example policy classes:
-
-```txt
-TaskPolicy
-ProjectPolicy
-CommentPolicy
-TeamPolicy
-RolePolicy
-```
-
-## Planned Frontend Permission Usage
-
-Frontend permissions may be used to:
-
-- Hide buttons
-- Disable form fields
-- Hide navigation items
-- Show access-denied states
-- Improve UX
-
-Frontend permissions must not be trusted as security.
-
-## Admin
-
-Admin has global access.
-
-Admin can:
-
-- Access admin panel
-- View all users
-- Disable users
-- View all teams
-- View all projects
-- View all tasks
-- Manage roles
-- Manage permissions
-- Enter any project
-- Perform all project actions
-
-## Team Lead
-
-Team Lead has high control within owned teams/projects.
-
-Team Lead can:
-
-- Create teams
-- Add users to teams
-- Assign projects to teams
-- Create projects
-- Create tasks
-- Assign tasks
-- Change task statuses
-- Comment on tasks
-- Delete comments from other users within owned projects
-- Create custom roles
-- Configure custom permissions
-- Create custom task statuses
-- Delete owned custom roles/statuses
-
-## Senior
-
-Senior can:
-
-- Create tasks
-- Assign tasks to allowed users
-- Change statuses on allowed tasks
-- Comment on tasks
-- View project content
-
-Senior cannot:
-
-- Delete comments from other users unless granted custom permission
-- Manage roles
-- Manage team settings
-- Access admin panel
-
-## Mid
-
-Mid can:
-
-- Assign unassigned tasks to himself
-- Assign allowed tasks to Junior users
-- Comment on tasks assigned to himself or Junior users
-- Edit own comments
-- Delete own comments
-- Change status of tasks assigned to himself or Junior users
-
-Mid cannot:
-
-- Create tasks by default
-- Assign tasks to Senior or Team Lead
-- Delete other users' comments
-- Manage roles
-- Manage project settings
-- Access admin panel
-
-## Junior
-
-Junior can:
-
-- View tasks assigned to him
-- Comment on tasks assigned to him
-- Edit own comments
-- Delete own comments
-
-Junior cannot:
-
-- Create tasks
-- Assign tasks
-- Change other users' tasks
-- Delete other users' comments
-- Manage statuses
-- Manage roles
-- Access admin panel
-
-## Viewer
-
-Viewer can:
-
-- View allowed project resources
-
-Viewer cannot:
-
-- Create tasks
-- Edit tasks
-- Assign tasks
-- Comment
-- Change statuses
-- Manage users
-- Manage roles
-- Access admin panel
-
-## Custom Roles
-
-Custom roles should support:
-
-- Custom title
-- Custom permission set
-- Custom authority level
-- Scope to workspace/team/project where appropriate
-
-Custom roles should not be allowed to exceed the creator's own authority level.
-
-Example:
-
-```txt
-A Team Lead should not be able to create a custom role stronger than Team Lead.
-```
-
-## Permission Testing Requirements
-
-Permission changes must include tests.
-
-Required test examples:
-
-```txt
-Team Lead can create task
-Senior can create task
-Mid cannot create task
-Junior cannot create task
-
-Senior can assign task to Mid
-Mid cannot assign task to Senior
-Junior cannot assign task
-
-Junior can comment on assigned task
-Junior cannot comment on unassigned task
-
-Junior can delete own comment
-Junior cannot delete another user's comment
-
-Team Lead can delete comments in owned project
-Viewer cannot comment
-Admin can access admin routes
-Non-admin cannot access admin routes
-```
+Frontend permission checks may improve user experience later, but backend enforcement must remain the source of security.

@@ -151,47 +151,85 @@ class DemoWorkspaceSeeder extends Seeder
 
         $roles['admin']->permissions()->sync($permissions->values()->all());
 
-        $roles['teamLead']->permissions()->sync(
-            $permissions->except(['admin.access', 'user.disable'])->values()->all(),
-        );
-
-        $roles['senior']->permissions()->sync($permissions->only([
+        $roles['teamLead']->permissions()->sync($permissions->only([
+            'workspace.view',
+            'workspace.create',
+            'workspace.update',
+            'team.view',
+            'team.create',
+            'team.update',
+            'team.delete',
+            'team_member.view',
+            'team_member.create',
+            'team_member.delete',
             'project.view',
+            'project.create',
+            'project.update',
+            'project.delete',
+            'project_member.view',
+            'project_member.create',
+            'project_member.delete',
+            'task_status.view',
+            'task_status.create',
+            'task_status.update',
+            'task_status.delete',
             'task.view',
             'task.create',
             'task.update',
-            'task.assign',
-            'task.change_status',
+            'task.delete',
             'comment.view',
             'comment.create',
-            'comment.update_own',
-            'comment.delete_own',
+            'comment.update',
+            'comment.delete',
+            'role.view',
+            'permission.view',
+        ])->values()->all());
+
+        $roles['senior']->permissions()->sync($permissions->only([
+            'project.view',
+            'task_status.view',
+            'task_status.create',
+            'task_status.update',
+            'task_status.delete',
+            'task.view',
+            'task.create',
+            'task.update',
+            'task.delete',
+            'comment.view',
+            'comment.create',
+            'comment.update',
+            'comment.delete',
         ])->values()->all());
 
         $roles['mid']->permissions()->sync($permissions->only([
             'project.view',
+            'task_status.view',
             'task.view',
+            'task.create',
             'task.update',
-            'task.assign',
-            'task.change_status',
             'comment.view',
             'comment.create',
-            'comment.update_own',
-            'comment.delete_own',
+            'comment.update',
+            'comment.delete',
         ])->values()->all());
 
         $roles['junior']->permissions()->sync($permissions->only([
             'project.view',
+            'task_status.view',
             'task.view',
-            'task.change_status',
+            'task.update',
             'comment.view',
             'comment.create',
-            'comment.update_own',
-            'comment.delete_own',
+            'comment.update',
         ])->values()->all());
 
         $roles['viewer']->permissions()->sync($permissions->only([
+            'workspace.view',
+            'team.view',
+            'team_member.view',
             'project.view',
+            'project_member.view',
+            'task_status.view',
             'task.view',
             'comment.view',
         ])->values()->all());

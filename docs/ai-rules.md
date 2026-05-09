@@ -38,7 +38,9 @@ Use Form Request classes for validation.
 
 Use API Resources for structured responses.
 
-Use Policies for authorization.
+Use explicit backend authorization checks for implemented access rules.
+
+Use Policies, Gates, or services when broader permission behavior is introduced.
 
 Use Services or Actions for business logic.
 
@@ -83,6 +85,8 @@ frontend permission-aware UI if needed
 
 Permission-related changes should include tests.
 
+Do not claim authorization, permission, policy, or workflow coverage unless matching backend tests exist.
+
 ## Frontend Rules
 
 Use TypeScript.
@@ -122,6 +126,10 @@ CHOKIDAR_INTERVAL=1000
 ```
 
 ## Documentation Rules
+
+Durable project files must not use planning labels.
+
+Do not use planning labels in production filenames, test filenames, class names, helper names, or route names.
 
 When changing setup steps, update:
 

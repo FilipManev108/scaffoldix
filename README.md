@@ -162,7 +162,7 @@ viewer@demo.test
 
 ## Authentication
 
-Phase 2 backend authentication is implemented with Laravel Sanctum session authentication.
+Backend authentication is implemented with Laravel Sanctum session authentication.
 
 Implemented API auth includes registration, login, logout, `GET /api/me`, disabled-user handling, email verification, password reset, and auth feature tests.
 
@@ -221,6 +221,7 @@ See:
 ```txt
 docs/architecture.md
 docs/auth.md
+docs/domain-api.md
 docs/database.md
 docs/testing.md
 docs/setup.md
@@ -231,7 +232,7 @@ docs/ai-rules.md
 
 ## Current Status
 
-Phase 1 backend foundation and Phase 2 backend authentication are complete.
+The Laravel API has implemented authentication and the core domain API.
 
 Implemented:
 
@@ -239,14 +240,18 @@ Implemented:
 - Shared API response helper
 - Laravel Sanctum session authentication
 - Registration, login, logout, current user, email verification, password reset, and disabled-user auth handling
+- Workspace, team, team member, project, project member, task status, task, and comment endpoints
+- Membership-based domain access checks for protected resources
+- Author-only comment update and delete checks
 - Core Eloquent models and relationships
 - Database migrations for users, workspaces, teams, projects, tasks, comments, roles, permissions, statuses, and pivots
 - Factories and seeders for backend smoke data
-- Pest tests for health, database factories, seeders, and auth behavior
+- Pest tests for health, database factories, seeders, auth behavior, domain endpoints, membership endpoints, comments, and domain authorization
 
 Planned later:
 
 - Frontend auth pages
-- Team/project/task CRUD
-- Policies and backend permission enforcement
+- Frontend team/project/task workflows
+- Role and permission matrix enforcement
+- Policies, gates, and permission services
 - Frontend application workflows

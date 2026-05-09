@@ -20,7 +20,7 @@ The backend includes smoke tests, auth tests, domain endpoint tests, membership 
 | --- | --- |
 | `HealthEndpointTest` | `GET /api/health` returns HTTP 200 and the expected JSON success shape. |
 | `DatabaseSmokeTest` | `User::factory()->create()` and `Workspace::factory()->create()` persist records. |
-| `SeederSmokeTest` | `DatabaseSeeder` creates demo users, demo workspace, demo project, and `admin.access`. |
+| `SeederSmokeTest` | `DatabaseSeeder` creates demo users, demo workspace, demo project, the seeded permission catalog, and expected demo role-permission assignments. |
 | `AuthRoutesTest` | Registration, login, logout, current user, protected routes, disabled users, email verification, password reset, validation errors, and sensitive-field exclusions. |
 | `DomainRoutesTest` | Representative domain routes require Sanctum auth and block disabled authenticated users. |
 | `WorkspaceRoutesTest` | Workspace create, list, show, update, soft delete, validation, duplicate slug handling, and inaccessible workspace rejection. |

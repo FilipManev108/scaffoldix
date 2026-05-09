@@ -30,7 +30,7 @@ Team + User + Role assignment through team_user_role
 | `tasks` | Project work items with creator, optional assignee, status, priority, and due date. |
 | `comments` | User comments attached to tasks. |
 | `roles` | Workspace-scoped roles with level, system flag, and description. |
-| `permissions` | Global permission names grouped by area, such as `task.view` or `admin.access`. |
+| `permissions` | Global permission names grouped by area, such as `task.view` or `permission.view`. |
 | `task_statuses` | Workspace/project statuses for task workflow columns. |
 | `team_user` | Team membership pivot. |
 | `project_user` | Project membership pivot. |
@@ -128,4 +128,4 @@ Seeded demo records include:
 
 - Workspace slug: `scaffoldix-demo`
 - Project slug: `scaffoldix-mvp`
-- Permission example: `admin.access`
+- Permission example: `permission.view`
